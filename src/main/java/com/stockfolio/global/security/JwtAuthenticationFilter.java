@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.stockfolio.infra.redis.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -26,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final RefreshTokenStore refreshTokenStore;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,7 +40,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String token = resolveToken(request);
-            if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
+            if (StringUtils.hasText(token)
+                    && jwtProvider.validateToken(token)
+                    && !refreshTokenStore.isBlacklisted(token)) {  // 로그아웃 블랙리스트 체크
                 Long userId = jwtProvider.getUserId(token);
                 UserDetails userDetails = userDetailsService.loadUserById(userId);
                 UsernamePasswordAuthenticationToken authentication =

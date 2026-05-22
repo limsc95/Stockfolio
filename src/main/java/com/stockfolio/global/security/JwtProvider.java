@@ -1,13 +1,13 @@
 package com.stockfolio.global.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Slf4j
@@ -23,7 +23,8 @@ public class JwtProvider {
             @Value("${jwt.access-token-expiry}") long accessTokenExpiry,
             @Value("${jwt.refresh-token-expiry}") long refreshTokenExpiry
     ) {
-        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        // UTF-8 bytes로 키 생성 (로컬 평문 시크릿, prod에서는 충분히 긴 값 사용)
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiry = accessTokenExpiry * 1000L;
         this.refreshTokenExpiry = refreshTokenExpiry * 1000L;
     }

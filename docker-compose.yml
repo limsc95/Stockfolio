@@ -18,7 +18,7 @@ services:
       MYSQL_USER: stockfolio
       MYSQL_PASSWORD: stockfolio1234
     ports:
-      - "3306:3306"
+      - "13306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d   # 초기화 SQL (선택)

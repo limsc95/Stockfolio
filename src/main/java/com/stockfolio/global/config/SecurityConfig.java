@@ -3,6 +3,7 @@ package com.stockfolio.global.config;
 import com.stockfolio.global.security.CustomUserDetailsService;
 import com.stockfolio.global.security.JwtAuthenticationFilter;
 import com.stockfolio.global.security.JwtProvider;
+import com.stockfolio.infra.redis.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final RefreshTokenStore refreshTokenStore;
 
     // ── 인증 불필요 경로 ──────────────────────────────────
     private static final String[] PUBLIC_GET_URLS = {
@@ -40,7 +42,19 @@ public class SecurityConfig {
 
     private static final String[] SWAGGER_URLS = {
             "/swagger-ui/**",
+            "/swagger-ui.html",
             "/api-docs/**",
+    };
+
+    private static final String[] PUBLIC_URLS = {
+            "/",            // → Swagger 리다이렉트
+            "/error",       // Spring 기본 에러 페이지
+            "/favicon.ico",
+    };
+
+    private static final String[] ADMIN_PAGE_URLS = {
+            "/admin",
+            "/admin/**",
     };
 
     @Bean
@@ -49,14 +63,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(SWAGGER_URLS).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_URLS).permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_URLS).permitAll()
-                        .requestMatchers(SWAGGER_URLS).permitAll()
+                        .requestMatchers(ADMIN_PAGE_URLS).hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider, userDetailsService),
+                        new JwtAuthenticationFilter(jwtProvider, userDetailsService, refreshTokenStore),
                         UsernamePasswordAuthenticationFilter.class
                 );
 

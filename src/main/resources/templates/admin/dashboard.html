@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('대시보드')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+<!-- Topbar -->
+<div class="topbar d-flex align-items-center justify-content-between">
+    <h5 class="mb-0 fw-semibold text-dark">대시보드</h5>
+    <span class="text-muted small" id="now"></span>
+</div>
+
+<!-- Main -->
+<main class="main-content">
+
+    <!-- 통계 카드 -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 회원</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalUsers}">0</div>
+                    </div>
+                </div>
+                <div class="mt-2 small text-success">
+                    <i class="bi bi-person-check"></i>
+                    활성 <span th:text="${stats.activeUsers}">0</span>명
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-box bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-briefcase-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">전체 포트폴리오</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.totalPortfolios}">0</div>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted">
+                    <i class="bi bi-bar-chart"></i> 등록된 포트폴리오 수
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">오늘 발동 알림</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.triggeredToday}">0</div>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted">
+                    <i class="bi bi-list-check"></i> 전체 설정
+                    <span th:text="${stats.totalAlerts}">0</span>건
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-box"
+                         th:classappend="${stats.alertFailedToday > 0} ? 'bg-danger bg-opacity-10 text-danger' : 'bg-info bg-opacity-10 text-info'">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">오늘 이메일 발송</div>
+                        <div class="fs-4 fw-bold" th:text="${stats.alertsSentToday}">0</div>
+                    </div>
+                </div>
+                <div class="mt-2 small"
+                     th:classappend="${stats.alertFailedToday > 0} ? 'text-danger' : 'text-muted'">
+                    <i class="bi bi-exclamation-circle"></i>
+                    실패 <span th:text="${stats.alertFailedToday}">0</span>건
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 바로가기 -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold bg-white border-bottom">
+                    <i class="bi bi-lightning-charge text-warning me-1"></i> 바로가기
+                </div>
+                <div class="card-body d-flex flex-column gap-2">
+                    <a href="/admin/users" class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-people me-2"></i>회원 목록 관리
+                    </a>
+                    <a href="/admin/alerts" class="btn btn-outline-secondary btn-sm text-start">
+                        <i class="bi bi-bell me-2"></i>알림 발송 이력 조회
+                    </a>
+                    <a href="/admin/alerts?status=FAILED" class="btn btn-outline-danger btn-sm text-start">
+                        <i class="bi bi-x-circle me-2"></i>실패 이메일 목록
+                    </a>
+                    <a href="/swagger-ui.html" target="_blank" class="btn btn-outline-dark btn-sm text-start">
+                        <i class="bi bi-code-slash me-2"></i>Swagger API 문서
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold bg-white border-bottom">
+                    <i class="bi bi-info-circle text-info me-1"></i> 시스템 정보
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted">서비스명</td>
+                            <td>StockFolio</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Health</td>
+                            <td>
+                                <a href="/actuator/health" target="_blank"
+                                   class="badge bg-success text-decoration-none">
+                                    <i class="bi bi-heart-pulse"></i> 확인
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Metrics</td>
+                            <td>
+                                <a href="/actuator/metrics" target="_blank"
+                                   class="badge bg-secondary text-decoration-none">
+                                    <i class="bi bi-graph-up"></i> Actuator
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">RabbitMQ</td>
+                            <td>
+                                <a href="http://localhost:15672" target="_blank"
+                                   class="badge bg-warning text-dark text-decoration-none">
+                                    <i class="bi bi-box"></i> 관리 콘솔
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+    document.getElementById('now').textContent = new Date().toLocaleString('ko-KR');
+</script>
+</body>
+</html>
