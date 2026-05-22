@@ -1,0 +1,44 @@
+# ──────────────────────────────────────────────────────────
+# 로컬 개발 환경 (docker-compose 기준)
+# ──────────────────────────────────────────────────────────
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/stockfolio?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: stockfolio
+    password: stockfolio1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # 로컬에서는 매 실행마다 스키마 재생성
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:   # 로컬은 비밀번호 없음
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+  mail:
+    username: dev-mail@example.com   # 로컬 테스트용 (실제 발송 안 해도 됨)
+    password: ''
+
+jwt:
+  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+
+# 로컬에서는 Swagger 활성화
+springdoc:
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    com.stockfolio: DEBUG
+    org.springframework.security: DEBUG
