@@ -15,33 +15,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * 공공데이터포털 금융위원회 주식시세정보 API 클라이언트
- *
- * <p>API: 금융위원회_주식시세정보 → getItemInfo
- * <p>URL: https://apis.data.go.kr/1160100/service/GetListedInfoService/getItemInfo
- * <p>발급: https://www.data.go.kr → 금융위원회_주식시세정보 신청 (즉시 승인, 무료)
- *
- * <p>응답 필드:
- * <ul>
- *   <li>srtnCd  - 단축코드 (6자리, 예: "005930")</li>
- *   <li>itmsNm  - 종목명 (예: "삼성전자")</li>
- *   <li>mrktCtg - 시장구분 (KOSPI / KOSDAQ)</li>
- * </ul>
- *
- * <p>설정: application-local.yml에 external.publicdata.api-key 값 입력
- * <br>※ data.go.kr에서 발급받은 Decoding 키(URL 디코딩된 키)를 사용할 것
- */
 @Slf4j
 @Component
 public class PublicDataApiClient {
 
-//    private static final String BASE_URL =
-////            "https://apis.data.go.kr/1160100/service/GetListedInfoService/getItemInfo";
-//            "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
-
     private static final String BASE_URL =
-        "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
+            "https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo";
 
     private static final int PAGE_SIZE = 3000;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -105,6 +84,11 @@ public class PublicDataApiClient {
                     break;
                 }
 
+                // 첫 페이지 첫 항목 원본 로그 → 필드명/값 확인용 (문제 해결 후 제거 가능)
+                if (pageNo == 1 && !items.isEmpty()) {
+                    log.debug("[PublicData] 첫 번째 항목 원본: {}", items.get(0));
+                }
+
                 for (JsonNode item : items) {
                     StockItem stockItem = parseItem(item);
                     if (stockItem != null) result.add(stockItem);
@@ -129,11 +113,13 @@ public class PublicDataApiClient {
         try {
             // data.go.kr는 serviceKey를 UriComponentsBuilder로 직접 주입해야
             // 이중 인코딩 없이 정상 동작 (queryParam()은 자동 인코딩하므로 사용 안 함)
-            URI uri = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+            URI uri = UriComponentsBuilder
+                    .fromHttpUrl(BASE_URL)
                     .queryParam("serviceKey", apiKey)
                     .queryParam("numOfRows", PAGE_SIZE)
                     .queryParam("pageNo", pageNo)
                     .queryParam("resultType", "json")
+                    .queryParam("basDt", LocalDate.now().minusDays(5).format(DATE_FMT))
                     .build(true)   // ← encode=false: 이미 인코딩된 키 그대로 사용
                     .toUri();
 
@@ -150,11 +136,17 @@ public class PublicDataApiClient {
 
     private StockItem parseItem(JsonNode item) {
         try {
-            String code   = item.path("srtnCd").asText("").trim();
+            // 공공데이터포털은 단축코드 앞에 "A" 접두사를 붙여 반환 (예: "A005930")
+            // 알파벳 1자리 + 6자리 숫자 형태이면 접두사를 제거하여 표준 6자리 코드로 변환
+            String rawCode = item.path("srtnCd").asText("").trim();
+            String code = (rawCode.length() == 7 && Character.isLetter(rawCode.charAt(0)))
+                    ? rawCode.substring(1)
+                    : rawCode;
+
             String name   = item.path("itmsNm").asText("").trim();
             String market = item.path("mrktCtg").asText("").trim().toUpperCase();
 
-            // 6자리 숫자 코드만 수락 (ETF 등 제외)
+            // 6자리 숫자 코드만 수락 (ETF·ELW 등 제외)
             if (!code.matches("\\d{6}")) return null;
             if (name.isBlank()) return null;
             if (!market.equals("KOSPI") && !market.equals("KOSDAQ")) return null;

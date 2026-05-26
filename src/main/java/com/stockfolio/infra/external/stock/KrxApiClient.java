@@ -134,7 +134,8 @@ public class KrxApiClient {
         try {
             String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
 
-            String body = "bld=" + BLD
+            // bld 값의 '/' 를 %2F 로 인코딩해야 서버가 올바르게 파싱함
+            String body = "bld=" + URLEncoder.encode(BLD, StandardCharsets.UTF_8)
                     + "&locale=ko_KR"
                     + "&mktId=" + marketId
                     + "&trdDd=" + today
@@ -149,6 +150,8 @@ public class KrxApiClient {
                     .header("Referer", PAGE_URL)
                     .header("User-Agent", USER_AGENT)
                     .header("Origin", BASE_URL)
+                    .header("Accept", "application/json, text/javascript, */*; q=0.01")
+                    .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
