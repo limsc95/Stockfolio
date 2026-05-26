@@ -36,8 +36,13 @@ import java.util.List;
 @Component
 public class PublicDataApiClient {
 
+//    private static final String BASE_URL =
+////            "https://apis.data.go.kr/1160100/service/GetListedInfoService/getItemInfo";
+//            "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
+
     private static final String BASE_URL =
-            "https://apis.data.go.kr/1160100/service/GetListedInfoService/getItemInfo";
+        "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
+
     private static final int PAGE_SIZE = 3000;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 

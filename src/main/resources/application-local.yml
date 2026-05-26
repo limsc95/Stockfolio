@@ -47,7 +47,8 @@ kis:
 # 미설정 시 KRX 크롤링 폴백으로 동작 (OTP 방식, 불안정할 수 있음)
 external:
   publicdata:
-    api-key: TLeRDrG6y1g43FNznPpFf5pFGhWPsgfO/5aPpkadZAh3bvktTXLFiT9xBdPENcEsZlRapX5owmPMG7e/28Mz2g==   # ← data.go.kr Decoding 키 입력
+    api-key: TLeRDrG6y1g43FNznPpFf5pFGhWPsgfO%2F5aPpkadZAh3bvktTXLFiT9xBdPENcEsZlRapX5owmPMG7e%2F28Mz2g%3D%3D # ← data.go.kr Encoding 키
+#    api-key: TLeRDrG6y1g43FNznPpFf5pFGhWPsgfO/5aPpkadZAh3bvktTXLFiT9xBdPENcEsZlRapX5owmPMG7e/28Mz2g==   # ← data.go.kr Decoding 키
 
 management:
   health:
