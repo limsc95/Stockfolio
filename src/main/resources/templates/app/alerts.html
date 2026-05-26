@@ -21,7 +21,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h4 class="fw-bold mb-0">가격 알림</h4>
-            <p class="text-muted small mb-0">목표가·손절가 도달 시 이메일로 알림을 받습니다</p>
+            <p class="text-muted small mb-0">목표가·손절가 도달 시 이메일로 알림을 받습니다 (10분 주기 체크)</p>
         </div>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createAlertModal">
             <i class="bi bi-bell-fill me-1"></i>알림 추가
@@ -52,6 +52,7 @@
                         <th class="ps-3">종목</th>
                         <th>유형</th>
                         <th class="text-end">기준가</th>
+                        <th class="text-end">설정 당시 현재가</th>
                         <th class="text-center">상태</th>
                         <th class="text-center">설정일</th>
                         <th class="text-center">발동일</th>
@@ -71,6 +72,11 @@
                         </td>
                         <td class="text-end fw-semibold"
                             th:text="${#numbers.formatInteger(a.targetPrice, 3, 'COMMA') + '원'}">-</td>
+                        <td class="text-end text-muted small">
+                            <span th:if="${a.referencePrice != null}"
+                                  th:text="${#numbers.formatInteger(a.referencePrice, 3, 'COMMA') + '원'}">-</span>
+                            <span th:unless="${a.referencePrice != null}" class="text-muted">—</span>
+                        </td>
                         <td class="text-center">
                             <span th:if="${a.triggered}" class="badge" style="background:#d1fae5;color:#065f46">
                                 <i class="bi bi-check2"></i> 발동
@@ -125,18 +131,41 @@
                 <h5 class="modal-title fw-semibold">가격 알림 설정</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/alerts" method="post">
+            <form action="/alerts" method="post" id="alertForm">
                 <div class="modal-body">
+
+                    <!-- 종목 코드 + 현재가 조회 -->
                     <div class="mb-3">
                         <label class="form-label fw-medium">종목 코드 <span class="text-danger">*</span></label>
-                        <input type="text" name="stockCode" id="alertStockCode" class="form-control"
-                               placeholder="예) 005930" required>
+                        <div class="input-group">
+                            <input type="text" name="stockCode" id="alertStockCode" class="form-control"
+                                   placeholder="예) 005930" required>
+                            <button type="button" class="btn btn-outline-secondary" id="fetchPriceBtn">
+                                <i class="bi bi-arrow-clockwise me-1"></i>현재가 조회
+                            </button>
+                        </div>
                         <div class="form-text">
                             <a href="/stocks" target="_blank">
                                 <i class="bi bi-search me-1"></i>종목 검색에서 코드를 확인하세요
                             </a>
                         </div>
+                        <!-- 현재가 표시 -->
+                        <div id="currentPriceInfo" class="mt-2 d-none">
+                            <div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-graph-up"></i>
+                                <span>현재가: <strong id="currentPriceDisplay">-</strong>원</span>
+                                <span class="text-muted small ms-auto" id="priceTimestamp"></span>
+                            </div>
+                        </div>
+                        <div id="priceErrorInfo" class="mt-2 d-none">
+                            <div class="alert alert-warning py-2 mb-0">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                현재가를 불러올 수 없습니다. 직접 금액을 입력해 주세요.
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- 알림 유형 -->
                     <div class="mb-3">
                         <label class="form-label fw-medium">알림 유형 <span class="text-danger">*</span></label>
                         <div class="d-flex gap-3">
@@ -145,7 +174,7 @@
                                        id="typeTarget" value="TARGET_PRICE" checked>
                                 <label class="form-check-label" for="typeTarget">
                                     <span class="badge bg-success me-1">목표가</span>
-                                    현재가 ≥ 기준가
+                                    현재가 &ge; 기준가
                                 </label>
                             </div>
                             <div class="form-check">
@@ -153,16 +182,57 @@
                                        id="typeStop" value="STOP_LOSS">
                                 <label class="form-check-label" for="typeStop">
                                     <span class="badge bg-danger me-1">손절가</span>
-                                    현재가 ≤ 기준가
+                                    현재가 &le; 기준가
                                 </label>
                             </div>
                         </div>
                     </div>
+
+                    <!-- 입력 방식 토글 -->
                     <div class="mb-3">
-                        <label class="form-label fw-medium">기준가 (원) <span class="text-danger">*</span></label>
-                        <input type="number" name="targetPrice" class="form-control"
-                               placeholder="0" min="1" step="0.01" required>
+                        <label class="form-label fw-medium">기준가 입력 방식</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="inputMode" id="modePrice" value="price" checked>
+                            <label class="btn btn-outline-secondary" for="modePrice">
+                                <i class="bi bi-currency-won me-1"></i>금액 직접 입력
+                            </label>
+                            <input type="radio" class="btn-check" name="inputMode" id="modePercent" value="percent">
+                            <label class="btn btn-outline-secondary" for="modePercent">
+                                <i class="bi bi-percent me-1"></i>현재가 기준 비율
+                            </label>
+                        </div>
                     </div>
+
+                    <!-- 금액 입력 영역 -->
+                    <div id="priceInputArea" class="mb-3">
+                        <label class="form-label fw-medium">기준가 (원) <span class="text-danger">*</span></label>
+                        <input type="number" name="targetPrice" id="targetPriceInput" class="form-control"
+                               placeholder="0" min="1" step="1">
+                    </div>
+
+                    <!-- 비율 입력 영역 -->
+                    <div id="percentInputArea" class="mb-3 d-none">
+                        <label class="form-label fw-medium">
+                            변동률 (%)
+                            <span class="text-muted small fw-normal"> — 양수: 상승, 음수: 하락</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" name="targetPercent" id="targetPercentInput" class="form-control"
+                                   placeholder="예) +10 또는 -5" step="0.1">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <!-- 계산된 기준가 미리보기 -->
+                        <div id="calculatedPrice" class="mt-2 d-none">
+                            <div class="alert alert-secondary py-2 mb-0">
+                                <i class="bi bi-calculator me-1"></i>
+                                계산된 기준가: <strong id="calculatedPriceValue">-</strong>원
+                            </div>
+                        </div>
+                        <div class="form-text">
+                            먼저 <strong>현재가 조회</strong>를 실행하면 계산 결과를 미리 볼 수 있습니다.
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
@@ -177,13 +247,124 @@
 
 <div th:replace="~{fragments/navbar :: scripts}"></div>
 <script>
-// URL 파라미터로 stockCode 자동 입력
+// ─── 전역 상태 ─────────────────────────────────────────────
+let currentPrice = null;
+
+// ─── URL 파라미터로 stockCode 자동 입력 ────────────────────
 const params = new URLSearchParams(window.location.search);
 const sc = params.get('stockCode');
 if (sc) {
     const el = document.getElementById('alertStockCode');
     if (el) el.value = sc;
 }
+
+// ─── 현재가 조회 버튼 ──────────────────────────────────────
+document.getElementById('fetchPriceBtn').addEventListener('click', async function () {
+    const code = document.getElementById('alertStockCode').value.trim();
+    if (!code) { alert('종목 코드를 입력해 주세요.'); return; }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>조회 중...';
+
+    try {
+        const res = await fetch('/api/v1/stocks/' + encodeURIComponent(code) + '/price', {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success && data.data && data.data.priceAvailable) {
+            currentPrice = data.data.currentPrice;
+            document.getElementById('currentPriceDisplay').textContent =
+                Number(currentPrice).toLocaleString('ko-KR');
+            document.getElementById('priceTimestamp').textContent =
+                new Date().toLocaleTimeString('ko-KR');
+            document.getElementById('currentPriceInfo').classList.remove('d-none');
+            document.getElementById('priceErrorInfo').classList.add('d-none');
+            updateCalculatedPrice();
+        } else {
+            currentPrice = null;
+            document.getElementById('currentPriceInfo').classList.add('d-none');
+            document.getElementById('priceErrorInfo').classList.remove('d-none');
+        }
+    } catch (e) {
+        currentPrice = null;
+        document.getElementById('currentPriceInfo').classList.add('d-none');
+        document.getElementById('priceErrorInfo').classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>현재가 조회';
+    }
+});
+
+// ─── 입력 방식 토글 ────────────────────────────────────────
+document.querySelectorAll('input[name="inputMode"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        const isPercent = this.value === 'percent';
+        document.getElementById('priceInputArea').classList.toggle('d-none', isPercent);
+        document.getElementById('percentInputArea').classList.toggle('d-none', !isPercent);
+        if (isPercent) {
+            document.getElementById('targetPriceInput').removeAttribute('required');
+            document.getElementById('targetPriceInput').value = '';
+        } else {
+            document.getElementById('targetPriceInput').setAttribute('required', '');
+            document.getElementById('targetPercentInput').value = '';
+            document.getElementById('calculatedPrice').classList.add('d-none');
+        }
+    });
+});
+
+// ─── 비율 입력 시 계산 미리보기 ────────────────────────────
+document.getElementById('targetPercentInput').addEventListener('input', updateCalculatedPrice);
+
+function updateCalculatedPrice() {
+    const pct = parseFloat(document.getElementById('targetPercentInput').value);
+    const calcDiv = document.getElementById('calculatedPrice');
+    const calcVal = document.getElementById('calculatedPriceValue');
+    if (!isNaN(pct) && currentPrice !== null && currentPrice > 0) {
+        const calculated = Math.round(currentPrice * (1 + pct / 100));
+        calcVal.textContent = calculated.toLocaleString('ko-KR');
+        calcDiv.classList.remove('d-none');
+    } else {
+        calcDiv.classList.add('d-none');
+    }
+}
+
+// ─── 폼 제출 유효성 검사 ──────────────────────────────────
+document.getElementById('alertForm').addEventListener('submit', function (e) {
+    const mode = document.querySelector('input[name="inputMode"]:checked').value;
+    if (mode === 'price') {
+        const price = document.getElementById('targetPriceInput').value;
+        if (!price || parseFloat(price) <= 0) {
+            e.preventDefault();
+            alert('기준가(원)를 입력해 주세요.');
+            return;
+        }
+        document.getElementById('targetPercentInput').value = '';
+    } else {
+        const pct = document.getElementById('targetPercentInput').value;
+        if (pct === '' || isNaN(parseFloat(pct))) {
+            e.preventDefault();
+            alert('변동률(%)을 입력해 주세요.');
+            return;
+        }
+        document.getElementById('targetPriceInput').value = '';
+    }
+});
+
+// ─── 모달 닫힐 때 초기화 ──────────────────────────────────
+document.getElementById('createAlertModal').addEventListener('hidden.bs.modal', function () {
+    currentPrice = null;
+    document.getElementById('currentPriceInfo').classList.add('d-none');
+    document.getElementById('priceErrorInfo').classList.add('d-none');
+    document.getElementById('calculatedPrice').classList.add('d-none');
+    document.getElementById('targetPriceInput').value = '';
+    document.getElementById('targetPercentInput').value = '';
+    document.getElementById('modePrice').checked = true;
+    document.getElementById('priceInputArea').classList.remove('d-none');
+    document.getElementById('percentInputArea').classList.add('d-none');
+    document.getElementById('targetPriceInput').setAttribute('required', '');
+});
 </script>
 </body>
 </html>

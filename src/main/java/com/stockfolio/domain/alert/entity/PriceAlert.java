@@ -38,6 +38,10 @@ public class PriceAlert extends BaseEntity {
     @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal targetPrice;
 
+    /** 알림 설정 당시 현재가 (비율 입력 시 기준값, UI 표시용) */
+    @Column(precision = 15, scale = 4)
+    private BigDecimal referencePrice;
+
     @Column(nullable = false)
     private boolean isTriggered;
 
@@ -49,12 +53,13 @@ public class PriceAlert extends BaseEntity {
 
     @Builder
     private PriceAlert(User user, String stockCode, String stockName,
-                        AlertType alertType, BigDecimal targetPrice) {
+                        AlertType alertType, BigDecimal targetPrice, BigDecimal referencePrice) {
         this.user = user;
         this.stockCode = stockCode;
         this.stockName = stockName;
         this.alertType = alertType;
         this.targetPrice = targetPrice;
+        this.referencePrice = referencePrice;
         this.isTriggered = false;
     }
 

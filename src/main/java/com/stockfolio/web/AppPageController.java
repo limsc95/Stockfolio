@@ -136,7 +136,7 @@ public class AppPageController {
             if (StringUtils.hasText(market)) {
                 try { mkt = Stock.Market.valueOf(market); } catch (IllegalArgumentException ignored) {}
             }
-            PageResponse<?> result = stockService.search(query, mkt, PageRequest.of(0, 30));
+            PageResponse<?> result = stockService.search(query, mkt, PageRequest.of(0, 50));
             model.addAttribute("stocks", result.getContent());
         }
         return "app/stocks";
@@ -191,13 +191,15 @@ public class AppPageController {
     public String createAlert(@AuthenticationPrincipal UserDetails userDetails,
                               @RequestParam String stockCode,
                               @RequestParam String alertType,
-                              @RequestParam BigDecimal targetPrice,
+                              @RequestParam(required = false) BigDecimal targetPrice,
+                              @RequestParam(required = false) BigDecimal targetPercent,
                               RedirectAttributes ra) {
         try {
             CreateAlertRequest req = new CreateAlertRequest();
             req.setStockCode(stockCode);
             req.setAlertType(PriceAlert.AlertType.valueOf(alertType));
             req.setTargetPrice(targetPrice);
+            req.setTargetPercent(targetPercent);
             alertService.create(uid(userDetails), req);
             ra.addFlashAttribute("successMsg", "알림이 설정되었습니다.");
         } catch (BusinessException e) {

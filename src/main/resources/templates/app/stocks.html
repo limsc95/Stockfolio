@@ -47,8 +47,11 @@
     <!-- 검색 결과 -->
     <div th:if="${stocks != null}">
         <div class="card shadow-sm" th:if="${!stocks.empty}">
-            <div class="card-header py-2">
-                <span class="fw-semibold small">검색 결과 <span class="text-primary" th:text="${stocks.size()}">0</span>건</span>
+            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                <span class="fw-semibold small">
+                    검색 결과 <span class="text-primary" th:text="${stocks.size()}">0</span>건
+                </span>
+                <span class="text-muted small" id="priceLoadStatus"></span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -59,11 +62,12 @@
                             <th>종목명</th>
                             <th>시장</th>
                             <th>업종</th>
+                            <th class="text-end">현재가</th>
                             <th class="text-center pe-3">바로가기</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="s : ${stocks}">
+                        <tr th:each="s : ${stocks}" th:id="'row-' + ${s.code}">
                             <td class="ps-3">
                                 <code class="text-primary fw-semibold" th:text="${s.code}">-</code>
                             </td>
@@ -72,6 +76,11 @@
                                 <span class="badge bg-secondary" th:text="${s.market}">-</span>
                             </td>
                             <td class="text-muted small" th:text="${s.sector ?: '-'}">-</td>
+                            <td class="text-end" th:id="'price-' + ${s.code}">
+                                <span class="text-muted small">
+                                    <span class="spinner-border spinner-border-sm" style="width:.7rem;height:.7rem"></span>
+                                </span>
+                            </td>
                             <td class="text-center pe-3">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <!-- 관심종목 추가 -->
@@ -81,6 +90,11 @@
                                             <i class="bi bi-star me-1"></i>관심
                                         </button>
                                     </form>
+                                    <!-- 알림 설정 -->
+                                    <a th:href="@{/alerts(stockCode=${s.code})}"
+                                       class="btn btn-outline-primary btn-sm" title="가격 알림 설정">
+                                        <i class="bi bi-bell"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -112,5 +126,52 @@
 </div>
 
 <div th:replace="~{fragments/navbar :: scripts}"></div>
+<script th:if="${stocks != null && !stocks.empty}">
+// ─── 검색 결과의 현재가를 순차 비동기 조회 ──────────────────
+(async function loadPrices() {
+    // Thymeleaf에서 종목 코드 목록 추출
+    const rows = document.querySelectorAll('tr[id^="row-"]');
+    const codes = Array.from(rows).map(r => r.id.replace('row-', ''));
+    if (codes.length === 0) return;
+
+    const statusEl = document.getElementById('priceLoadStatus');
+    let loaded = 0;
+    statusEl.textContent = `현재가 조회 중... (0/${codes.length})`;
+
+    // 5개씩 병렬 조회 (API 과부하 방지)
+    const BATCH = 5;
+    for (let i = 0; i < codes.length; i += BATCH) {
+        const batch = codes.slice(i, i + BATCH);
+        await Promise.all(batch.map(code => fetchAndRender(code)));
+        loaded += batch.length;
+        statusEl.textContent = `현재가 조회 중... (${Math.min(loaded, codes.length)}/${codes.length})`;
+    }
+
+    statusEl.textContent = `현재가 조회 완료 ✓`;
+    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+})();
+
+async function fetchAndRender(code) {
+    const cell = document.getElementById('price-' + code);
+    if (!cell) return;
+
+    try {
+        const res = await fetch('/api/v1/stocks/' + encodeURIComponent(code) + '/price', {
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.success && data.data && data.data.priceAvailable) {
+            const price = Number(data.data.currentPrice).toLocaleString('ko-KR');
+            cell.innerHTML = '<span class="fw-semibold text-dark">' + price + '원</span>';
+        } else {
+            cell.innerHTML = '<span class="text-muted small">조회 불가</span>';
+        }
+    } catch (e) {
+        cell.innerHTML = '<span class="text-muted small">—</span>';
+    }
+}
+</script>
 </body>
 </html>

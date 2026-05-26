@@ -25,10 +25,16 @@ public class Stock extends BaseEntity {
     private String sector;
 
     @Builder
-    private Stock(String code, String name, Market market, String sector) {
+    public Stock(String code, String name, Market market, String sector) {
         this.code = code;
         this.name = name;
         this.market = market;
+        this.sector = sector;
+    }
+
+    // ── 도메인 메서드 ──────────────────────────────────────
+    public void updateInfo(String name, String sector) {
+        this.name = name;
         this.sector = sector;
     }
 

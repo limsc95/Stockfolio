@@ -14,6 +14,7 @@ public class AlertResponse {
     private final String stockName;
     private final String alertType;
     private final BigDecimal targetPrice;
+    private final BigDecimal referencePrice;   // 설정 당시 현재가 (비율 입력 시 표시용)
     private final boolean isTriggered;
     private final LocalDateTime createdAt;
     private final LocalDateTime triggeredAt;
@@ -24,6 +25,7 @@ public class AlertResponse {
         this.stockName = alert.getStockName();
         this.alertType = alert.getAlertType().name();
         this.targetPrice = alert.getTargetPrice();
+        this.referencePrice = alert.getReferencePrice();
         this.isTriggered = alert.isTriggered();
         this.createdAt = alert.getCreatedAt();
         this.triggeredAt = alert.getTriggeredAt();

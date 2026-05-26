@@ -27,7 +27,7 @@ spring:
     virtual-host: /
 
   mail:
-    username: dev-mail@example.com   # 로컬 테스트용 (실제 발송 안 해도 됨)
+    username: limsc1366@gmail.com   # 로컬 테스트용 (실제 발송 안 해도 됨)
     password: ''
 
 # ── KIS Developers API (한국투자증권 모의계좌) ─────────────
@@ -37,6 +37,17 @@ kis:
   app-key: ''
   app-secret: ''
   access-token: ''
+
+# ── 공공데이터포털 주식 종목 API ───────────────────────────
+# 발급 방법:
+#   1) https://www.data.go.kr 회원가입
+#   2) "금융위원회_주식시세정보" 검색 → 활용 신청 (즉시 승인, 무료)
+#   3) 마이페이지 → 개발계정 → Decoding 키(URL 디코딩된 키) 복사
+#   4) 아래 api-key 값에 붙여넣기 (Encoding 키 X, Decoding 키 O)
+# 미설정 시 KRX 크롤링 폴백으로 동작 (OTP 방식, 불안정할 수 있음)
+external:
+  publicdata:
+    api-key: TLeRDrG6y1g43FNznPpFf5pFGhWPsgfO/5aPpkadZAh3bvktTXLFiT9xBdPENcEsZlRapX5owmPMG7e/28Mz2g==   # ← data.go.kr Decoding 키 입력
 
 management:
   health:

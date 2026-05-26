@@ -2,6 +2,7 @@ package com.stockfolio.domain.admin.controller;
 
 import com.stockfolio.domain.admin.service.AdminService;
 import com.stockfolio.domain.alert.entity.AlertHistory;
+import com.stockfolio.domain.stock.service.StockSyncService;
 import com.stockfolio.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+    private final StockSyncService stockSyncService;
 
     // ══════════════════════════════════════════════════════
     // Thymeleaf 페이지
@@ -80,5 +82,36 @@ public class AdminController {
         Long adminId = Long.parseLong(userDetails.getUsername());
         adminService.deactivateUser(adminId, userId);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    // ── 종목 데이터 동기화 (KRX) ──────────────────────────
+
+    @Operation(summary = "종목 데이터 동기화 (KOSPI + KOSDAQ)")
+    @PostMapping("/stocks/sync")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<?>> syncStocks() {
+        StockSyncService.SyncResult result = stockSyncService.syncAll();
+        return ResponseEntity.ok(ApiResponse.success(
+                java.util.Map.of(
+                        "kospi", result.kospiCount(),
+                        "kosdaq", result.kosdaqCount(),
+                        "total", result.total(),
+                        "message", "종목 데이터 동기화 완료"
+                )
+        ));
+    }
+
+    @Operation(summary = "종목 데이터 동기화 (Thymeleaf 폼 POST 용)")
+    @PostMapping("/stocks/sync/form")
+    public String syncStocksForm(org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        try {
+            StockSyncService.SyncResult result = stockSyncService.syncAll();
+            ra.addFlashAttribute("syncResult",
+                    String.format("동기화 완료 — KOSPI %,d건 / KOSDAQ %,d건 / 합계 %,d건",
+                            result.kospiCount(), result.kosdaqCount(), result.total()));
+        } catch (Exception e) {
+            ra.addFlashAttribute("syncError", "동기화 실패: " + e.getMessage());
+        }
+        return "redirect:/admin";
     }
 }

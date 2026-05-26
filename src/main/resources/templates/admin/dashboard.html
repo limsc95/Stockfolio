@@ -92,6 +92,16 @@
 
     </div>
 
+    <!-- 동기화 결과 메시지 -->
+    <div th:if="${syncResult}" class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${syncResult}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${syncError}" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i><span th:text="${syncError}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <!-- 바로가기 -->
     <div class="row g-3">
         <div class="col-md-6">
@@ -112,6 +122,13 @@
                     <a href="/swagger-ui.html" target="_blank" class="btn btn-outline-dark btn-sm text-start">
                         <i class="bi bi-code-slash me-2"></i>Swagger API 문서
                     </a>
+                    <hr class="my-1">
+                    <form action="/admin/stocks/sync/form" method="post" id="syncForm">
+                        <button type="submit" class="btn btn-success btn-sm text-start w-100" id="syncBtn"
+                                onclick="return confirm('KOSPI + KOSDAQ 전체 종목을 동기화합니다. 수분 소요될 수 있습니다. 진행할까요?')">
+                            <i class="bi bi-arrow-repeat me-2"></i>종목 데이터 동기화 (KRX)
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * 가격 알림 스케줄러
  *
- * 30초마다 미발동 알림 전체를 조회한 뒤,
+ * 10분마다 미발동 알림 전체를 조회한 뒤,
  * 종목코드 기준으로 그룹핑해서 현재가를 한 번씩만 조회.
  * 조건 충족 시 → PriceAlert.trigger() + RabbitMQ 발행.
  *
@@ -36,7 +36,7 @@ public class AlertScheduler {
     private final StockPriceService stockPriceService;
     private final AlertMessagePublisher publisher;
 
-    @Scheduled(fixedDelay = 30_000)   // 30초마다 실행
+    @Scheduled(fixedDelay = 600_000)   // 10분마다 실행
     @Transactional
     public void checkAlerts() {
         List<PriceAlert> untriggered = alertRepository.findAllUntriggeredWithUser();
