@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/navbar :: head('포트폴리오 상세')}"></head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('home')}"></div>
+
+<div class="container py-4">
+
+    <!-- 플래시 메시지 -->
+    <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show py-2" role="alert">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i><span th:text="${errorMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- 헤더 -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/home" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h4 class="fw-bold mb-0" th:text="${portfolio.name}">포트폴리오명</h4>
+            <span class="text-muted small" th:if="${portfolio.description}" th:text="${portfolio.description}"></span>
+        </div>
+    </div>
+
+    <!-- 요약 카드 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 text-center">
+                <div class="text-muted small mb-1">총 투자금액</div>
+                <div class="fs-5 fw-bold"
+                     th:text="${#numbers.formatInteger(portfolio.totalInvestment, 3, 'COMMA') + '원'}">-</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 text-center">
+                <div class="text-muted small mb-1">총 평가금액</div>
+                <div class="fs-5 fw-bold"
+                     th:text="${#numbers.formatInteger(portfolio.totalCurrentValue, 3, 'COMMA') + '원'}">-</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 text-center">
+                <div class="text-muted small mb-1">평가손익</div>
+                <div class="fs-5 fw-bold"
+                     th:classappend="${portfolio.totalProfitLoss > 0} ? 'profit-text' : (${portfolio.totalProfitLoss < 0} ? 'loss-text' : '')"
+                     th:text="${(portfolio.totalProfitLoss > 0 ? '+' : '') + #numbers.formatInteger(portfolio.totalProfitLoss, 3, 'COMMA') + '원'}">-</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 text-center">
+                <div class="text-muted small mb-1">수익률</div>
+                <div class="fs-5 fw-bold"
+                     th:classappend="${portfolio.totalProfitLossRate > 0} ? 'profit-text' : (${portfolio.totalProfitLossRate < 0} ? 'loss-text' : '')"
+                     th:text="${(portfolio.totalProfitLossRate > 0 ? '+' : '') + portfolio.totalProfitLossRate + '%'}">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보유 종목 테이블 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between py-3">
+            <h6 class="fw-semibold mb-0">
+                <i class="bi bi-layers me-1 text-primary"></i>보유 종목
+                <span class="badge bg-light text-dark ms-1" th:text="${portfolio.holdings.size()}">0</span>
+            </h6>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
+                <i class="bi bi-plus-lg me-1"></i>종목 추가
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">종목</th>
+                        <th class="text-end">수량</th>
+                        <th class="text-end">평균단가</th>
+                        <th class="text-end">현재가</th>
+                        <th class="text-end">투자금액</th>
+                        <th class="text-end">평가금액</th>
+                        <th class="text-end pe-3">수익률</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="h : ${portfolio.holdings}">
+                        <td class="ps-3">
+                            <div class="fw-semibold" th:text="${h.stockName}">종목명</div>
+                            <div class="text-muted small" th:text="${h.stockCode}">코드</div>
+                        </td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(h.quantity, 1, 'COMMA')}">-</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(h.averagePrice, 3, 'COMMA') + '원'}">-</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(h.currentPrice, 3, 'COMMA') + '원'}">-</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(h.investmentAmount, 3, 'COMMA') + '원'}">-</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(h.currentValue, 3, 'COMMA') + '원'}">-</td>
+                        <td class="text-end pe-3">
+                            <span class="badge"
+                                  th:classappend="${h.profitLossRate > 0} ? 'badge-profit' : (${h.profitLossRate < 0} ? 'badge-loss' : 'badge-neutral')"
+                                  th:text="${(h.profitLossRate > 0 ? '+' : '') + h.profitLossRate + '%'}">0%</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${portfolio.holdings.empty}">
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox me-1"></i>보유 종목이 없습니다. 종목을 추가해보세요.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 종목 추가 모달 -->
+<div class="modal fade" id="addHoldingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">종목 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/portfolios/{id}/holdings(id=${portfolio.id})}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">종목 코드 <span class="text-danger">*</span></label>
+                        <input type="text" name="stockCode" class="form-control"
+                               placeholder="예) 005930 (삼성전자)" required>
+                        <div class="form-text">
+                            <a href="/stocks" target="_blank">
+                                <i class="bi bi-search me-1"></i>종목 검색에서 코드를 확인하세요
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">매수 수량 <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" class="form-control"
+                               placeholder="1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">매수 단가 (원) <span class="text-danger">*</span></label>
+                        <input type="number" name="price" class="form-control"
+                               placeholder="0" min="1" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+</html>

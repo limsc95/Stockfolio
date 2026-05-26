@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/navbar :: head('종목 검색')}"></head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('stocks')}"></div>
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h4 class="fw-bold mb-0">종목 검색</h4>
+        <p class="text-muted small mb-0">종목명 또는 코드로 검색하세요</p>
+    </div>
+
+    <!-- 검색 폼 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+            <form action="/stocks" method="get" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-medium small mb-1">종목명 / 코드</label>
+                    <input type="text" name="query" class="form-control"
+                           placeholder="삼성전자 또는 005930"
+                           th:value="${query}" autofocus>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small mb-1">시장</label>
+                    <select name="market" class="form-select">
+                        <option value="" th:selected="${market == null || market == ''}">전체</option>
+                        <option value="KOSPI" th:selected="${market == 'KOSPI'}">KOSPI</option>
+                        <option value="KOSDAQ" th:selected="${market == 'KOSDAQ'}">KOSDAQ</option>
+                        <option value="NYSE" th:selected="${market == 'NYSE'}">NYSE</option>
+                        <option value="NASDAQ" th:selected="${market == 'NASDAQ'}">NASDAQ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>검색
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="/stocks" class="btn btn-outline-secondary w-100">초기화</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 검색 결과 -->
+    <div th:if="${stocks != null}">
+        <div class="card shadow-sm" th:if="${!stocks.empty}">
+            <div class="card-header py-2">
+                <span class="fw-semibold small">검색 결과 <span class="text-primary" th:text="${stocks.size()}">0</span>건</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">종목코드</th>
+                            <th>종목명</th>
+                            <th>시장</th>
+                            <th>업종</th>
+                            <th class="text-center pe-3">바로가기</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s : ${stocks}">
+                            <td class="ps-3">
+                                <code class="text-primary fw-semibold" th:text="${s.code}">-</code>
+                            </td>
+                            <td class="fw-medium" th:text="${s.name}">-</td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${s.market}">-</span>
+                            </td>
+                            <td class="text-muted small" th:text="${s.sector ?: '-'}">-</td>
+                            <td class="text-center pe-3">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <!-- 관심종목 추가 -->
+                                    <form th:action="@{/watchlist/{code}(code=${s.code})}" method="post">
+                                        <button type="submit" class="btn btn-outline-warning btn-sm"
+                                                title="관심종목 추가">
+                                            <i class="bi bi-star me-1"></i>관심
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 결과 없음 -->
+        <div class="card shadow-sm text-center py-5" th:if="${stocks.empty}">
+            <div class="card-body">
+                <i class="bi bi-search display-4 text-muted"></i>
+                <h6 class="mt-3 text-muted">검색 결과가 없습니다</h6>
+                <p class="text-muted small" th:text="'&quot;' + ${query} + '&quot; 에 해당하는 종목을 찾을 수 없습니다.'"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 초기 상태 (검색 전) -->
+    <div th:if="${stocks == null}" class="card shadow-sm text-center py-5">
+        <div class="card-body">
+            <i class="bi bi-bar-chart-line display-4 text-muted"></i>
+            <h6 class="mt-3 text-muted">종목명 또는 코드를 입력하여 검색하세요</h6>
+            <p class="text-muted small">예) 삼성전자, 005930, AAPL</p>
+        </div>
+    </div>
+
+</div>
+
+<div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+</html>

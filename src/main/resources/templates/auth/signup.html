@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/navbar :: head('회원가입')}"></head>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+
+<div class="container" style="max-width:440px;">
+
+    <div class="text-center mb-4">
+        <h3 class="fw-bold text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>StockFolio</h3>
+        <p class="text-muted small">주식 포트폴리오 관리 서비스</p>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h5 class="fw-semibold mb-4">회원가입</h5>
+
+        <div th:if="${error}" class="alert alert-danger d-flex align-items-center py-2" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <form action="/signup" method="post">
+            <div class="mb-3">
+                <label class="form-label fw-medium">이름</label>
+                <input type="text" name="name" class="form-control"
+                       placeholder="홍길동" required autofocus maxlength="50">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-medium">이메일</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="example@email.com" required>
+            </div>
+            <div class="mb-1">
+                <label class="form-label fw-medium">비밀번호</label>
+                <input type="password" name="password" id="pw" class="form-control"
+                       placeholder="8~20자" required minlength="8" maxlength="20">
+            </div>
+            <p class="text-muted small mb-4">8자 이상 20자 이하로 입력해주세요.</p>
+
+            <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                <i class="bi bi-person-plus me-1"></i>가입하기
+            </button>
+        </form>
+
+        <hr class="my-3">
+        <p class="text-center text-muted small mb-0">
+            이미 계정이 있으신가요?
+            <a href="/login" class="text-decoration-none fw-medium">로그인</a>
+        </p>
+    </div>
+</div>
+
+<div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+</html>

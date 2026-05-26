@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/navbar :: head('로그인')}"></head>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+
+<div class="container" style="max-width:420px;">
+
+    <div class="text-center mb-4">
+        <h3 class="fw-bold text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>StockFolio</h3>
+        <p class="text-muted small">주식 포트폴리오 관리 서비스</p>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h5 class="fw-semibold mb-4">로그인</h5>
+
+        <!-- 에러 메시지 -->
+        <div th:if="${error}" class="alert alert-danger d-flex align-items-center py-2" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+        <!-- 성공 메시지 (회원가입 후 리다이렉트) -->
+        <div th:if="${success}" class="alert alert-success d-flex align-items-center py-2" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${success}"></span>
+        </div>
+
+        <form action="/login" method="post">
+            <div class="mb-3">
+                <label class="form-label fw-medium">이메일</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="admin@stockfolio.com" required autofocus>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-medium">비밀번호</label>
+                <input type="password" name="password" class="form-control"
+                       placeholder="비밀번호 입력" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-1"></i>로그인
+            </button>
+        </form>
+
+        <hr class="my-3">
+        <p class="text-center text-muted small mb-0">
+            계정이 없으신가요?
+            <a href="/signup" class="text-decoration-none fw-medium">회원가입</a>
+        </p>
+    </div>
+
+    <p class="text-center text-muted small mt-3">
+        <i class="bi bi-info-circle me-1"></i>
+        테스트 계정: <code>admin@stockfolio.com</code> / <code>admin1234!</code>
+    </p>
+</div>
+
+<div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+</html>

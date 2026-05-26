@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/navbar :: head('관심종목')}"></head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('watchlist')}"></div>
+
+<div class="container py-4">
+
+    <!-- 플래시 메시지 -->
+    <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show py-2" role="alert">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i><span th:text="${errorMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- 헤더 -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">관심종목</h4>
+            <span class="text-muted small" th:text="'총 ' + ${items.size()} + '개'"></span>
+        </div>
+        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#addWatchModal">
+            <i class="bi bi-star-fill me-1"></i>종목 추가
+        </button>
+    </div>
+
+    <!-- 관심종목 테이블 -->
+    <div class="card shadow-sm" th:if="${!items.empty}">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">종목</th>
+                        <th>시장</th>
+                        <th>업종</th>
+                        <th class="text-end">현재가</th>
+                        <th class="text-center">추가일</th>
+                        <th class="text-center pe-3">관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${items}">
+                        <td class="ps-3">
+                            <div class="fw-semibold" th:text="${item.stockName}">종목명</div>
+                            <div class="text-muted small" th:text="${item.stockCode}">코드</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary" th:text="${item.market}">-</span>
+                        </td>
+                        <td class="text-muted small" th:text="${item.sector ?: '-'}">-</td>
+                        <td class="text-end fw-semibold">
+                            <span th:if="${item.priceAvailable}"
+                                  th:text="${#numbers.formatInteger(item.currentPrice, 3, 'COMMA') + '원'}">-</span>
+                            <span th:unless="${item.priceAvailable}" class="text-muted small">가격 조회 불가</span>
+                        </td>
+                        <td class="text-center text-muted small"
+                            th:text="${#temporals.format(item.addedAt,'yyyy-MM-dd')}">-</td>
+                        <td class="text-center pe-3">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <!-- 알림 설정 바로가기 -->
+                                <a th:href="@{/alerts(stockCode=${item.stockCode})}" class="btn btn-outline-primary btn-sm"
+                                   title="가격 알림 설정">
+                                    <i class="bi bi-bell"></i>
+                                </a>
+                                <!-- 관심종목 제거 -->
+                                <form th:action="@{/watchlist/{code}/delete(code=${item.stockCode})}" method="post">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('관심종목에서 제거하시겠습니까?')"
+                                            title="제거">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관심종목 없을 때 -->
+    <div th:if="${items.empty}" class="card shadow-sm text-center py-5">
+        <div class="card-body">
+            <i class="bi bi-star display-4 text-muted"></i>
+            <h6 class="mt-3 text-muted">관심종목이 없습니다</h6>
+            <p class="text-muted small">종목 검색에서 관심 종목을 추가해보세요!</p>
+            <a href="/stocks" class="btn btn-outline-primary me-2">
+                <i class="bi bi-search me-1"></i>종목 검색
+            </a>
+            <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#addWatchModal">
+                <i class="bi bi-star-fill me-1"></i>직접 추가
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- 관심종목 직접 추가 모달 -->
+<div class="modal fade" id="addWatchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">관심종목 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addWatchForm" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">종목 코드 <span class="text-danger">*</span></label>
+                        <input type="text" id="watchStockCode" class="form-control"
+                               placeholder="예) 005930" required>
+                        <div class="form-text">
+                            <a href="/stocks" target="_blank">
+                                <i class="bi bi-search me-1"></i>종목 검색에서 코드를 확인하세요
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-star-fill me-1"></i>추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/navbar :: scripts}"></div>
+<script>
+// 관심종목 추가 폼: action을 동적으로 설정
+document.getElementById('addWatchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const code = document.getElementById('watchStockCode').value.trim();
+    if (!code) return;
+    this.action = '/watchlist/' + encodeURIComponent(code);
+    this.submit();
+});
+</script>
+</body>
+</html>
