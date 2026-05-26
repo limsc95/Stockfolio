@@ -6,7 +6,7 @@
 INSERT IGNORE INTO users (email, password, name, role, is_active, created_at, updated_at)
 VALUES (
     'admin@stockfolio.com',
-    '$2a$10$7EqJtq98hPqEX7fNZaFWoOe5UjTuEJE4EnLcFRThBygGMsqQ.We8e',
+    '$2a$10$/ymaOuFlCqWDexvxIFCg9.nzAyvHIeeT5gfxOpqIEev0fS/W7V/7a',
     '관리자',
     'ADMIN',
     true,

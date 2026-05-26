@@ -2,8 +2,10 @@ package com.stockfolio.global.config;
 
 import com.stockfolio.global.security.CustomUserDetailsService;
 import com.stockfolio.global.security.JwtAuthenticationFilter;
+import com.stockfolio.global.security.JwtCookieLogoutHandler;
 import com.stockfolio.global.security.JwtProvider;
 import com.stockfolio.infra.redis.RefreshTokenStore;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +29,7 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
     private final RefreshTokenStore refreshTokenStore;
+    private final JwtCookieLogoutHandler jwtCookieLogoutHandler;
 
     // ── 인증 불필요 경로 ──────────────────────────────────
     private static final String[] PUBLIC_GET_URLS = {
@@ -50,6 +53,8 @@ public class SecurityConfig {
             "/",            // → Swagger 리다이렉트
             "/error",       // Spring 기본 에러 페이지
             "/favicon.ico",
+            "/login",       // 로그인 페이지
+            "/signup",      // 회원가입 페이지
     };
 
     private static final String[] ADMIN_PAGE_URLS = {
@@ -70,6 +75,28 @@ public class SecurityConfig {
                         .requestMatchers(ADMIN_PAGE_URLS).hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                // HTML 요청 → /login 리다이렉트, API 요청 → 401 JSON
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            String accept = request.getHeader("Accept");
+                            if (accept != null && accept.contains("text/html")) {
+                                response.sendRedirect("/login");
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json;charset=UTF-8");
+                                response.getWriter().write(
+                                        "{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다\"}}"
+                                );
+                            }
+                        })
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler(jwtCookieLogoutHandler)
+                        .deleteCookies("SF_TOKEN")
+                        .logoutSuccessUrl("/login")
+                        .permitAll()
                 )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtProvider, userDetailsService, refreshTokenStore),

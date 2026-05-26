@@ -6,7 +6,6 @@ import com.stockfolio.domain.user.dto.TokenResponse;
 import com.stockfolio.domain.user.service.AuthService;
 import com.stockfolio.global.exception.BusinessException;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -81,33 +80,5 @@ public class AuthPageController {
         }
     }
 
-    // ── 로그아웃 ──────────────────────────────────────────
-    @PostMapping("/logout")
-    public String logout(@AuthenticationPrincipal UserDetails userDetails,
-                         HttpServletRequest request,
-                         HttpServletResponse response) {
-        if (userDetails != null) {
-            Long userId = Long.parseLong(userDetails.getUsername());
-            String accessToken = resolveTokenFromCookie(request);
-            if (accessToken != null) {
-                authService.logout(userId, accessToken);
-            }
-        }
-        // SF_TOKEN 쿠키 만료
-        Cookie expiredCookie = new Cookie("SF_TOKEN", "");
-        expiredCookie.setHttpOnly(true);
-        expiredCookie.setPath("/");
-        expiredCookie.setMaxAge(0);
-        response.addCookie(expiredCookie);
-
-        return "redirect:/login";
-    }
-
-    private String resolveTokenFromCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie c : request.getCookies()) {
-            if ("SF_TOKEN".equals(c.getName())) return c.getValue();
-        }
-        return null;
-    }
+    // ── 로그아웃은 Spring Security LogoutFilter가 처리 (/logout POST → /login 리다이렉트) ──
 }
