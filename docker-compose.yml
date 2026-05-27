@@ -1,8 +1,16 @@
 version: '3.8'
 
 # ──────────────────────────────────────────────────────────
-# 로컬 개발 환경 — MySQL + Redis + RabbitMQ
-# 사용법: docker compose up -d
+# 로컬 개발 환경 — MySQL + Redis + RabbitMQ + Prometheus + Grafana
+#
+# 사용법:
+#   docker compose up -d          전체 스택 실행
+#   docker compose up -d mysql redis rabbitmq   인프라만 실행
+#
+# 접속:
+#   RabbitMQ Management : http://localhost:15672  (guest / guest)
+#   Grafana             : http://localhost:3000   (admin / admin)
+#   Prometheus          : http://localhost:9090
 # ──────────────────────────────────────────────────────────
 
 services:
@@ -67,7 +75,58 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Prometheus ────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: stockfolio-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d          # 15일치 메트릭 보관
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-lifecycle                     # POST /-/reload 로 설정 리로드 가능
+    extra_hosts:
+      - "host.docker.internal:host-gateway"        # 호스트(앱 서버) 접근용
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Grafana ───────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: stockfolio-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin         # 초기 비밀번호 (운영 시 반드시 변경)
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/stockfolio.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
 volumes:
   mysql_data:
   redis_data:
   rabbitmq_data:
+  prometheus_data:
+  grafana_data:

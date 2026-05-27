@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/pc/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/654cfb9c-b3ad-4d3c-8f4e-2f9e4799fbae/e82ffb4e-a4ce-4647-8df8-8684f5c26b27/skills/docx/**)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(npm root *)",
+      "Bash(node -e \"require\\('docx'\\); console.log\\('ok'\\);\")",
+      "Bash(node gen.js)",
+      "Bash(ls -lh \"/mnt/c/sources/solo_project2/StockFolio_Portfolio_v1.docx\")"
+    ]
+  }
+}

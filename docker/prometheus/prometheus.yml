@@ -1,0 +1,25 @@
+global:
+  scrape_interval:     15s   # 메트릭 수집 주기
+  evaluation_interval: 15s   # 알림 규칙 평가 주기
+  external_labels:
+    monitor: 'stockfolio'
+
+# ── 수집 대상 ────────────────────────────────────────────────
+scrape_configs:
+
+  # Spring Boot Actuator (로컬 개발 환경)
+  # 앱이 Docker 외부(호스트)에서 실행될 때: host.docker.internal:8080
+  # 앱도 Docker로 실행될 때: stockfolio-app:8080  (docker-compose prod 사용 시)
+  - job_name: 'stockfolio-app'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          app: 'stockfolio'
+          env: 'local'
+
+  # Prometheus 자기 자신
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
