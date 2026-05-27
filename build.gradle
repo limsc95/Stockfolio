@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.0'
     id 'io.spring.dependency-management' version '1.1.5'
+    id 'jacoco'          // 코드 커버리지 리포트
 }
 
 group = 'com.stockfolio'
@@ -87,4 +88,43 @@ clean.doLast {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport   // 테스트 완료 후 커버리지 리포트 자동 생성
+}
+
+// ── JaCoCo 커버리지 리포트 설정 ──────────────────────────────
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required  = true    // SonarQube / CI 연동용
+        html.required = true    // 브라우저 열람용 (build/reports/jacoco/test/html/index.html)
+        csv.required  = false
+    }
+    // 인프라 코드 / 자동 생성 Q클래스 / DTO / 설정 클래스 제외
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "com/stockfolio/**/dto/**",
+                    "com/stockfolio/**/entity/**",       // 순수 도메인 엔티티는 별도 단위 테스트로 검증
+                    "com/stockfolio/**/config/**",
+                    "com/stockfolio/infra/**",
+                    "com/stockfolio/StockfolioApplication*",
+                    "com/stockfolio/global/common/Q*",   // QueryDSL Q클래스
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                // 서비스 · 컨트롤러 · 레포지토리 계층 라인 커버리지 60% 이상 요구
+                minimum = 0.60
+            }
+        }
+    }
 }

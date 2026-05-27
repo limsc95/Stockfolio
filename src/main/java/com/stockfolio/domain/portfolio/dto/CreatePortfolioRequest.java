@@ -2,6 +2,7 @@ package com.stockfolio.domain.portfolio.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CreatePortfolioRequest {
 
     @NotBlank(message = "포트폴리오 이름은 필수입니다.")
