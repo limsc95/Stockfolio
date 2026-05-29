@@ -119,7 +119,7 @@ public class PublicDataApiClient {
                     .queryParam("numOfRows", PAGE_SIZE)
                     .queryParam("pageNo", pageNo)
                     .queryParam("resultType", "json")
-                    .queryParam("basDt", LocalDate.now().minusDays(5).format(DATE_FMT))
+                    .queryParam("basDt", LocalDate.now().minusDays(1).format(DATE_FMT))
                     .build(true)   // ← encode=false: 이미 인코딩된 키 그대로 사용
                     .toUri();
 

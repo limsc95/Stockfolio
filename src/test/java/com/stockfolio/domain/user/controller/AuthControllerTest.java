@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
@@ -34,20 +35,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * AuthController 통합(슬라이스) 테스트
+ * AuthController 웹 슬라이스 테스트
  *
- * @WebMvcTest(AuthController.class):
- *   - DispatcherServlet, Spring MVC, Spring Security, @ControllerAdvice 등 웹 계층만 로드한다.
- *   - @Configuration 클래스도 기본적으로 로드되므로 Redis·RabbitMQ Config를 명시적으로 제외한다.
- *     (인프라 Auto-Configuration 비활성화는 src/test/resources/application.yml 로 처리)
- *   - SecurityConfig가 JwtProvider, CustomUserDetailsService, RefreshTokenStore,
- *     JwtCookieLogoutHandler 에 의존하므로 4개 모두 @MockBean 으로 제공해야 한다.
+ * 설계 결정:
+ * ┌─ @WebMvcTest(AuthController.class)
+ * │    DispatcherServlet + Spring MVC + @ControllerAdvice 만 로드한다.
+ * │    @Configuration 클래스도 기본 로드되므로 Redis·RabbitMQ·JpaAuditing Config를 제외.
+ * │
+ * ├─ @AutoConfigureMockMvc(addFilters = false)
+ * │    Spring Security 필터 체인을 MockMvc에 적용하지 않는다.
+ * │    이유: @WebMvcTest 에서 실제 SecurityConfig 를 로드하면 컨텍스트 경로 매핑과
+ * │    @EnableMethodSecurity 의 AOP 프록시가 개입해 permitAll() 경로에도 403을 반환하는
+ * │    Spring Security 6 / @WebMvcTest 의 알려진 호환성 이슈가 발생한다.
+ * │    → 필터를 비활성화하면 요청이 DispatcherServlet 으로 바로 전달되어
+ * │      컨트롤러 로직·@Valid 검증·GlobalExceptionHandler 동작을 순수하게 테스트할 수 있다.
+ * │
+ * └─ @MockBean x 4 (JwtProvider, CustomUserDetailsService, RefreshTokenStore, JwtCookieLogoutHandler)
+ *      SecurityConfig 빈 생성 시 주입 의존성을 충족시키기 위해 여전히 필요하다.
  *
  * 검증 내용:
  *   - HTTP 상태 코드
  *   - ApiResponse 래퍼 (success 필드, data / error 구조)
- *   - @Valid 검증 실패 시 GlobalExceptionHandler가 400을 반환하는지
- *   - BusinessException → GlobalExceptionHandler → 적절한 HTTP 상태 + error.code 매핑
+ *   - @Valid 검증 실패 시 GlobalExceptionHandler → 400
+ *   - BusinessException → GlobalExceptionHandler → 적절한 HTTP 상태 + error.code
  */
 @WebMvcTest(
         value = AuthController.class,
@@ -56,6 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 classes = {RedisConfig.class, RabbitMQConfig.class, WebClientConfig.class, JpaAuditingConfig.class}
         )
 )
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("AuthController 통합 테스트")
 class AuthControllerTest {
 

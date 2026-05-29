@@ -30,8 +30,10 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Column(nullable = false)
-    private boolean isActive;
+    // NOTE: 필드명을 'active'로 지정해야 JPA 속성명(active)과 Bean 프로퍼티명(isActive() → active)이
+    //       일치하여 Hibernate 6의 JPQL 타입 체크를 통과한다. DB 컬럼명은 is_active 로 유지한다.
+    @Column(nullable = false, name = "is_active")
+    private boolean active;
 
     @Column
     private LocalDateTime deletedAt;
@@ -43,7 +45,7 @@ public class User extends BaseEntity {
         this.password = password;
         this.name = name;
         this.role = role;
-        this.isActive = true;
+        this.active = true;
     }
 
     // ── 도메인 메서드 ──────────────────────────────────────
@@ -56,12 +58,12 @@ public class User extends BaseEntity {
     }
 
     public void deactivate() {
-        this.isActive = false;
+        this.active = false;
     }
 
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
-        this.isActive = false;
+        this.active = false;
     }
 
     // ── Role Enum ────────────────────────────────────────

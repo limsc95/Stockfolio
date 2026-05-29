@@ -18,9 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     // 관리자 통계
-    // NOTE: boolean 필드 isActive 에 대한 파생 쿼리가 Hibernate 6의 엄격한 타입 체크를 통과하지 못하므로
-    //       명시적 JPQL 사용 (SemanticException 방지)
-    @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true")
+    // NOTE: 'boolean isActive' 필드명에 대해 Hibernate 6이 JPQL 타입 체크(TypecheckUtil)를
+    //       통과하지 못하는 SemanticException 이슈가 있다.
+    //       nativeQuery = true 로 JPQL 파서를 완전히 우회해 해결한다.
+    //       테이블명 'users', 컬럼명 'is_active' 는 @Table/@Column 매핑과 일치한다.
+    @Query(value = "SELECT COUNT(*) FROM users WHERE is_active = TRUE", nativeQuery = true)
     long countByIsActiveTrue();
 
     // 관리자 검색 (이메일 or 이름)

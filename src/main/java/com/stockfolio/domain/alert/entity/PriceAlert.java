@@ -42,8 +42,9 @@ public class PriceAlert extends BaseEntity {
     @Column(precision = 15, scale = 4)
     private BigDecimal referencePrice;
 
-    @Column(nullable = false)
-    private boolean isTriggered;
+    // NOTE: User.active 와 동일한 이유로 'triggered' 로 지정 (Hibernate 6 JPQL 호환)
+    @Column(nullable = false, name = "is_triggered")
+    private boolean triggered;
 
     @Column
     private LocalDateTime triggeredAt;
@@ -60,12 +61,12 @@ public class PriceAlert extends BaseEntity {
         this.alertType = alertType;
         this.targetPrice = targetPrice;
         this.referencePrice = referencePrice;
-        this.isTriggered = false;
+        this.triggered = false;
     }
 
     // ── 도메인 메서드 ──────────────────────────────────────
     public void trigger() {
-        this.isTriggered = true;
+        this.triggered = true;
         this.triggeredAt = LocalDateTime.now();
     }
 

@@ -173,7 +173,7 @@ class AuthServiceTest {
             // given
             LoginRequest request = new LoginRequest("user@test.com", "password");
             User user = activeUser(1L, "user@test.com");
-            ReflectionTestUtils.setField(user, "isActive", false);
+            ReflectionTestUtils.setField(user, "active", false);
 
             given(userRepository.findByEmailAndDeletedAtIsNull("user@test.com"))
                     .willReturn(Optional.of(user));
