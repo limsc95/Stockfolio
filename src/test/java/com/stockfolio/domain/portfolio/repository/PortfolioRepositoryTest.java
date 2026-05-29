@@ -4,12 +4,15 @@ import com.stockfolio.domain.portfolio.entity.Portfolio;
 import com.stockfolio.domain.portfolio.entity.PortfolioHolding;
 import com.stockfolio.domain.user.entity.User;
 import com.stockfolio.domain.user.repository.UserRepository;
+import com.stockfolio.global.config.JpaAuditingConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,12 +28,14 @@ import static org.assertj.core.api.Assertions.*;
  *   2. findByIdWithHoldings() — JPQL LEFT JOIN FETCH가 N+1을 피해 보유 종목을 한 번에 로드하는지
  */
 @DataJpaTest
+@Import(JpaAuditingConfig.class)
 @DisplayName("PortfolioRepository 통합 테스트")
 class PortfolioRepositoryTest {
 
     @Autowired PortfolioRepository       portfolioRepository;
     @Autowired PortfolioHoldingRepository holdingRepository;
     @Autowired UserRepository            userRepository;
+    @Autowired TestEntityManager         em;
 
     private User owner;   // 각 테스트에서 공통 사용할 소유자
 
@@ -135,6 +140,10 @@ class PortfolioRepositoryTest {
             Portfolio portfolio = savePortfolio("종목 보유 포트폴리오");
             addHolding(portfolio, "005930", "삼성전자");
             addHolding(portfolio, "000660", "SK하이닉스");
+
+            // 1차 캐시를 비워 JOIN FETCH가 DB에서 새로 읽도록 강제
+            em.flush();
+            em.clear();
 
             // when
             Optional<Portfolio> result = portfolioRepository.findByIdWithHoldings(portfolio.getId());

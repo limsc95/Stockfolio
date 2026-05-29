@@ -1,11 +1,13 @@
 package com.stockfolio.domain.user.repository;
 
 import com.stockfolio.domain.user.entity.User;
+import com.stockfolio.global.config.JpaAuditingConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.Optional;
 
@@ -23,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
  *   - BaseEntity의 createdAt/updatedAt 자동 채우기(@EnableJpaAuditing)를 활성화한다.
  */
 @DataJpaTest
+@Import(JpaAuditingConfig.class)
 @DisplayName("UserRepository 통합 테스트")
 class UserRepositoryTest {
 

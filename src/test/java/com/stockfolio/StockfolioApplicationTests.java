@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.mail.javamail.JavaMailSender;
 
 /**
  * 애플리케이션 컨텍스트 스모크 테스트
@@ -31,6 +32,10 @@ class StockfolioApplicationTests {
     /** RabbitMQConfig.rabbitTemplate(ConnectionFactory) 의 의존성 충족 */
     @MockBean
     ConnectionFactory rabbitConnectionFactory;
+
+    /** AlertMessageConsumer(JavaMailSender, ...) 의 의존성 충족 */
+    @MockBean
+    JavaMailSender javaMailSender;
 
     @Test
     @DisplayName("Spring Application Context 가 정상 로드되어야 한다")
